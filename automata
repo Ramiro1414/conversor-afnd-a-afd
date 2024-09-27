@@ -1,4 +1,8 @@
 digraph {
-	Q0 [fillcolor=lightgreen shape=circle style=filled]
-	Q0 -> Q0 [label=0]
+	Q0 [shape=circle]
+	Q0 -> Q1 [label=a]
+	Q0 -> Q0 [label=b]
+	Q1 [fillcolor=lightgreen shape=circle style=filled]
+	Q1 -> Q0 [label=a]
+	Q1 -> Q1 [label=b]
 }
