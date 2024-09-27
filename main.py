@@ -364,7 +364,7 @@ class TablaApp:
         # Configurar la interacción
         ax.axis('off')  # Ocultar los ejes
         plt.tight_layout()
-        plt.title('Visualizador de Imagen Interactivo')
+        plt.title('Automata Deterministico')
         
         # Mostrar la imagen de forma interactiva
         plt.show()
