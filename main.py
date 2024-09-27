@@ -65,6 +65,14 @@ class TablaApp:
 
     def graficar_automata(self):
         """ Abre una nueva ventana para graficar el autómata """
+
+        if (os.path.getsize('afd.csv') == 0):
+            messagebox.showerror("Error", "Debe eliminar el no determinismo (si lo hay) para graficar el automata.")
+            with open('afd.csv', 'w', newline='', encoding='utf-8') as file:
+                pass
+
+            return
+
         # Cerrar la ventana existente si está abierta
         if self.ventana_grafico is not None and self.ventana_grafico.winfo_exists():
             self.ventana_grafico.destroy()
@@ -87,6 +95,13 @@ class TablaApp:
     def eliminar_determinismo(self):
         """ Elimina el determinismo del autómata y guarda el CSV """
 
+        if (os.path.getsize('afnd.csv') == 0):
+            messagebox.showerror("Error", "Debe crear la tabla de transicion antes de eliminar el no determinismo.")
+            with open('afnd.csv', 'w', newline='', encoding='utf-8') as file:
+                pass
+
+            return
+
         # Lógica para eliminar determinismo
         matriz_csv = leer_csv("afnd.csv")
         lista_transiciones, diccionario_estados, diccionario_transiciones = obtener_datos_matriz(matriz_csv)
@@ -100,6 +115,8 @@ class TablaApp:
             # Escribir las filas de la matriz
             for row in matriz_determinista:
                 writer.writerow(row)
+        
+        messagebox.showinfo("OK", "No determinismo eliminado.")
 
     def create_table(self):
         """ Crea una tabla básica con 'δ' en la primera celda y 'F' en la última celda de la primera fila """
@@ -263,12 +280,18 @@ class TablaApp:
 
                                 return  # Salir de la función si se encuentra un error
                     else:
-                        # Si se encuentra un estado no válido, mostrar un mensaje de error
-                        messagebox.showerror("Error", "Estado no valido en transicion.")
-                        with open('afnd.csv', 'w', newline='', encoding='utf-8') as file:
-                            pass  # No se escribe nada, el archivo se vacía
 
-                        return  # Salir de la función si se encuentra un error
+                        if estado == '-':
+                            continue
+                        else:
+                            # Si se encuentra un estado no válido, mostrar un mensaje de error
+                            messagebox.showerror("Error", "Estado no valido en transicion.")
+                            with open('afnd.csv', 'w', newline='', encoding='utf-8') as file:
+                                pass  # No se escribe nada, el archivo se vacía
+
+                            return  # Salir de la función si se encuentra un error
+        
+        messagebox.showinfo("OK", "Tabla de transiciones creada.")
 
     def create_validation_section(self):
         """ Agrega la sección de validación de cadenas en la parte inferior del frame de validación """
@@ -335,9 +358,20 @@ class TablaApp:
         labelResultado.update()
 
 def iniciar_interfaz():
+
+    def on_closing():
+    # Mostrar un mensaje de confirmación antes de cerrar y borra el contenido de los archivos "afnd.csv" y "afd.csv"
+        if (messagebox.askokcancel("Salir", "¿Seguro que quieres cerrar la aplicación?")):
+            with open('afnd.csv', 'w', newline='', encoding='utf-8') as file:
+                pass  # No se escribe nada, el archivo se vacía
+            with open('afd.csv', 'w', newline='', encoding='utf-8') as file:
+                pass  # No se escribe nada, el archivo se vacía
+            root.destroy()  # Cierra la ventana principal
+
     # Crear ventana principal
     root = tk.Tk()
     TablaApp(root)
+    root.protocol("WM_DELETE_WINDOW", on_closing)
     root.mainloop()
 
 if __name__ == "__main__":
