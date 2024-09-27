@@ -1,5 +1,5 @@
 # Conversor de AFND a AFD
-Este programa transforma un sistema de autómatas finitos no determinístico a uno determinístico.
+Este programa transforma un autómata finito no determinístico, que el usuario ingresa a través de una matriz de transición, en un autómata finito determinístico.
 
 Autores:
 * Ramiro Parra

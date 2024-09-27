@@ -3,8 +3,8 @@ import csv
 import os
 from tkinter import Label, Entry, Button, Frame, messagebox
 from PIL import Image, ImageTk
-from include.logic import validar_cadena, cadena_con_transiciones_validas, transformar_automata_deterministico
-from include.reader import parsear_tabla_transicion, obtener_datos_matriz, leer_csv
+from include.logic import validar_cadena, cadena_con_transiciones_validas, transformar_automata_deterministico, eliminar_estados_inalcanzables
+from include.reader import parsear_tabla_transicion, obtener_datos_matriz, leer_csv, cantidad_columnas_matriz
 from include.utils import transicion_es_no_determinista, separar_estados
 from graphviz import Digraph
 
@@ -108,14 +108,34 @@ class TablaApp:
 
         matriz_determinista = transformar_automata_deterministico(matriz_csv, lista_transiciones, diccionario_estados, diccionario_transiciones)
 
+        nueva_matriz_determinista = eliminar_estados_inalcanzables(matriz_determinista, cantidad_columnas_matriz(matriz_determinista))
+
         # Guardar el nuevo CSV
         with open("afd.csv", mode="w", newline='', encoding="utf-8") as file:
             writer = csv.writer(file, delimiter=';', quoting=csv.QUOTE_NONE, escapechar='\\')
 
+            # Leer la primera línea del archivo afnd.csv
+            with open("afnd.csv", mode="r", newline='', encoding="utf-8") as afnd_file:
+                reader = csv.reader(afnd_file, delimiter=';')
+                primera_linea = next(reader)  # Leer solo la primera línea
+
+            # Escribir la primera línea en el archivo afd.csv
+            writer.writerow(primera_linea)
+
+            # Recorrer cada fila en la matriz
+            for i in range(len(nueva_matriz_determinista)):
+                # Recorrer cada elemento en la fila
+                for j in range(len(nueva_matriz_determinista[i])):
+                    # Si el elemento es una cadena vacía, reemplazarlo por '-'
+                    if nueva_matriz_determinista[i][j] == '':
+                        nueva_matriz_determinista[i][j] = '-'
+
             # Escribir las filas de la matriz
-            for row in matriz_determinista:
+            for row in nueva_matriz_determinista:
                 writer.writerow(row)
         
+        print(nueva_matriz_determinista)
+
         messagebox.showinfo("OK", "No determinismo eliminado.")
 
     def create_table(self):
