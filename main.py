@@ -2,13 +2,16 @@ import tkinter as tk
 import csv
 import os
 from tkinter import Label, Entry, Button, Frame, messagebox
-from PIL import Image, ImageTk
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 from include.logic import validar_cadena, cadena_con_transiciones_validas, transformar_automata_deterministico, eliminar_estados_inalcanzables
 from include.reader import parsear_tabla_transicion, obtener_datos_matriz, leer_csv, cantidad_columnas_matriz
 from include.utils import transicion_es_no_determinista, separar_estados
 from graphviz import Digraph
 
 labelResultado = None
+valorNumeroEstados = 0
+fig_actual = None
 
 def renderAutomata(diccionario_estados_resultado, diccionario_transiciones_resultado):
     # Crear un grafo dirigido con Graphviz
@@ -37,7 +40,6 @@ class TablaApp:
         self.table = []
         self.num_rows = 0
         self.num_cols = 0
-        self.ventana_grafico = None  # Atributo para almacenar la ventana del gráfico
 
         # Crear el frame para la tabla
         self.table_frame = Frame(root)
@@ -73,24 +75,15 @@ class TablaApp:
 
             return
 
-        # Cerrar la ventana existente si está abierta
-        if self.ventana_grafico is not None and self.ventana_grafico.winfo_exists():
-            self.ventana_grafico.destroy()
-
         # Obtener los datos del autómata para graficar
         matriz_csv = leer_csv("afd.csv")
-        lista_transiciones, diccionario_estados, diccionario_transiciones = obtener_datos_matriz(matriz_csv)
+        _, diccionario_estados, diccionario_transiciones = obtener_datos_matriz(matriz_csv)
 
         # Renderizar el autómata
         renderAutomata(diccionario_estados, diccionario_transiciones)
-
-        # Crear la nueva ventana
-        self.ventana_grafico = tk.Toplevel(self.root)  # Asignar la ventana a un atributo
-        self.ventana_grafico.title("Gráfico del Autómata")
-        self.ventana_grafico.geometry("800x800")
-
+        
         # Mostrar la imagen en la nueva ventana
-        self.mostrar_imagen(self.ventana_grafico, "automata.png")
+        self.mostrar_imagen("automata.png")
     
     def eliminar_determinismo(self):
         """ Elimina el determinismo del autómata y guarda el CSV """
@@ -133,13 +126,11 @@ class TablaApp:
             # Escribir las filas de la matriz
             for row in nueva_matriz_determinista:
                 writer.writerow(row)
-        
-        print(nueva_matriz_determinista)
 
         messagebox.showinfo("OK", "No determinismo eliminado.")
 
     def create_table(self):
-        """ Crea una tabla básica con 'δ' en la primera celda y 'F' en la última celda de la primera fila """
+        """ Crea una tabla básica con 'd' en la primera celda y 'F' en la última celda de la primera fila """
         for r in range(2):
             row = []
             for c in range(2):
@@ -148,9 +139,19 @@ class TablaApp:
                 row.append(entry)
             self.table.append(row)
 
-        # Poner el símbolo δ en la primera celda y F en la última de la primera fila
+        # Poner el símbolo d en la primera celda y F en la última de la primera fila
         self.table[0][0].insert(0, "d")
+        self.table[0][0].config(state='readonly')
         self.table[0][-1].insert(0, "F")
+
+        # Poner 'Q0' en la primera columna de la segunda fila y deshabilitarla
+
+        global valorNumeroEstados
+        nombreEstadoInicial = 'Q' + str(valorNumeroEstados)
+        valorNumeroEstados += 1
+
+        self.table[1][0].insert(0, nombreEstadoInicial)
+        self.table[1][0].config(state='readonly')  # Evitar que el valor sea modificado
 
         self.num_rows = 2
         self.num_cols = 2
@@ -188,13 +189,26 @@ class TablaApp:
 
     def add_row(self):
         """ Agrega una fila a la tabla """
+        global valorNumeroEstados  # Asegúrate de que valorNumeroEstados esté definido como variable global
         self.num_rows += 1
         row = []
+
         for c in range(self.num_cols):
             entry = Entry(self.table_frame)
+
+            # Asignar el valor 'Q' + str(valorNumeroEstados) a la columna 0
+            if c == 0:
+                entry.insert(0, 'Q' + str(valorNumeroEstados))
+                entry.config(state='readonly')  # Hacer que la primera celda no sea editable
+
             entry.grid(row=self.num_rows - 1, column=c, padx=5, pady=5)
             row.append(entry)
+
         self.table.append(row)
+        
+        # Incrementar el valor de la variable global valorNumeroEstados
+        valorNumeroEstados += 1
+
         self.update_button_positions()  # Mueve los botones hacia abajo
 
     def save_as_csv(self):
@@ -314,46 +328,46 @@ class TablaApp:
         messagebox.showinfo("OK", "Tabla de transiciones creada.")
 
     def create_validation_section(self):
-        """ Agrega la sección de validación de cadenas en la parte inferior del frame de validación """
+        """ Agrega la sección de validación de cadenas en el frame de validación """
         # --- Campo para ingresar cadenas ---
         self.label_ingresar_cadena = Label(self.validation_frame, text="Ingrese una cadena", fg="black", font=("Arial", 14))
-        self.label_ingresar_cadena.grid(row=0, column=0, padx=10, pady=10)
+        self.label_ingresar_cadena.grid(row=0, column=0, padx=10, pady=10, columnspan=2, sticky="w")
+
         self.campo_texto = Entry(self.validation_frame, font=("Arial", 14))
-        self.campo_texto.grid(row=0, column=1, padx=10, pady=10)
+        self.campo_texto.grid(row=1, column=0, padx=10, pady=10, columnspan=2, sticky="we")
 
         # --- Boton para validar cadenas ---
         self.boton_validar = Button(self.validation_frame, text="Validar", fg="blue", font=("Arial", 14), command=self.validar_cadena_interfaz)
-        self.boton_validar.grid(row=0, column=2, padx=10, pady=10)
+        self.boton_validar.grid(row=2, column=0, padx=10, pady=10, columnspan=2)
 
-    def mostrar_imagen(self, ventana, ruta_imagen):
-        """ Muestra una imagen en la ventana dada, ajustando el tamaño para mantener la relación de aspecto """
-        # Obtener el tamaño de la pantalla
-        ancho_pantalla = ventana.winfo_screenwidth()
-        alto_pantalla = ventana.winfo_screenheight()
+        # Espacio reservado para mostrar el resultado de la validación
+        global labelResultado
+        labelResultado = Label(self.validation_frame, text="", fg="black", font=("Arial", 14))
+        labelResultado.grid(row=3, column=0, columnspan=2, padx=10, pady=10, sticky="we")
 
-        # Abrir la imagen
-        imagen = Image.open(ruta_imagen)
 
-        # Obtener las dimensiones originales de la imagen
-        ancho_imagen_original, alto_imagen_original = imagen.size
-
-        # Calcular el factor de escala manteniendo la relación de aspecto
-        factor_escala = min(ancho_pantalla / ancho_imagen_original, alto_pantalla / alto_imagen_original)
-
-        # Calcular el nuevo tamaño de la imagen escalada
-        nuevo_ancho = int(ancho_imagen_original * factor_escala)
-        nuevo_alto = int(alto_imagen_original * factor_escala)
-
-        # Redimensionar la imagen
-        imagen = imagen.resize((nuevo_ancho, nuevo_alto))
-
-        # Convertir la imagen a formato compatible con Tkinter
-        imagen_tk = ImageTk.PhotoImage(imagen)
-
-        # Mostrar la imagen en la ventana
-        label_imagen = Label(ventana, image=imagen_tk)
-        label_imagen.image = imagen_tk  # Evitar que se recoja la imagen por el garbage collector
-        label_imagen.pack()
+    def mostrar_imagen(self, ruta_imagen):
+        global fig_actual
+        
+        # Si ya hay una figura abierta, ciérrala
+        if fig_actual is not None:
+            plt.close(fig_actual)
+        
+        # Cargar la imagen
+        imagen = mpimg.imread(ruta_imagen)
+        
+        # Crear la figura y los ejes
+        fig_actual = plt.figure()
+        ax = fig_actual.add_subplot(111)
+        ax.imshow(imagen)
+        
+        # Configurar la interacción
+        ax.axis('off')  # Ocultar los ejes
+        plt.tight_layout()
+        plt.title('Visualizador de Imagen Interactivo')
+        
+        # Mostrar la imagen de forma interactiva
+        plt.show()
 
     def validar_cadena_interfaz(self):
         global labelResultado
