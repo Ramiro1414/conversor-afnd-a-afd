@@ -29,9 +29,10 @@ def transformar_automata_deterministico(matriz, lista_transiciones, diccionario_
 
     i = 1
     while i < len(matriz_output):
-        for j in range(1, columnas-1):
+        for j in range(1, columnas-2):
             estado_actual = matriz_output[i][j]
             if transicion_es_no_determinista(estado_actual):
+                print("estado actual:" + str(estado_actual))
                 result = union_estados_transiciones(estado_actual, lista_transiciones, diccionario_transiciones)
                 nuevo_estado_compuesto = ",".join(sorted(separar_estados(estado_actual)))
 

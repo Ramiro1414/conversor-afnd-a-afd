@@ -326,13 +326,33 @@ class TablaApp:
         self.boton_validar.grid(row=0, column=2, padx=10, pady=10)
 
     def mostrar_imagen(self, ventana, ruta_imagen):
-        """ Muestra una imagen en la ventana dada """
+        """ Muestra una imagen en la ventana dada, ajustando el tamaño para mantener la relación de aspecto """
+        # Obtener el tamaño de la pantalla
+        ancho_pantalla = ventana.winfo_screenwidth()
+        alto_pantalla = ventana.winfo_screenheight()
+
+        # Abrir la imagen
         imagen = Image.open(ruta_imagen)
-        imagen = imagen.resize((800, 800))  # Ajustar el tamaño según tus necesidades
+
+        # Obtener las dimensiones originales de la imagen
+        ancho_imagen_original, alto_imagen_original = imagen.size
+
+        # Calcular el factor de escala manteniendo la relación de aspecto
+        factor_escala = min(ancho_pantalla / ancho_imagen_original, alto_pantalla / alto_imagen_original)
+
+        # Calcular el nuevo tamaño de la imagen escalada
+        nuevo_ancho = int(ancho_imagen_original * factor_escala)
+        nuevo_alto = int(alto_imagen_original * factor_escala)
+
+        # Redimensionar la imagen
+        imagen = imagen.resize((nuevo_ancho, nuevo_alto))
+
+        # Convertir la imagen a formato compatible con Tkinter
         imagen_tk = ImageTk.PhotoImage(imagen)
 
+        # Mostrar la imagen en la ventana
         label_imagen = Label(ventana, image=imagen_tk)
-        label_imagen.image = imagen_tk  # Necesario para evitar que se recoja la imagen por el garbage collector
+        label_imagen.image = imagen_tk  # Evitar que se recoja la imagen por el garbage collector
         label_imagen.pack()
 
     def validar_cadena_interfaz(self):
