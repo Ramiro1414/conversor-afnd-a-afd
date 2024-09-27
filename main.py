@@ -145,7 +145,6 @@ class TablaApp:
         self.table[0][-1].insert(0, "F")
 
         # Poner 'Q0' en la primera columna de la segunda fila y deshabilitarla
-
         global valorNumeroEstados
         nombreEstadoInicial = 'Q' + str(valorNumeroEstados)
         valorNumeroEstados += 1
@@ -189,7 +188,7 @@ class TablaApp:
 
     def add_row(self):
         """ Agrega una fila a la tabla """
-        global valorNumeroEstados  # Asegúrate de que valorNumeroEstados esté definido como variable global
+        global valorNumeroEstados 
         self.num_rows += 1
         row = []
 
